@@ -5,12 +5,13 @@ import java.util.Objects;
 
 public class State {
     private ArrayList<Car> state;
-    private String[][] map = new String[6][6];
+    private String[][] map;
     public State(ArrayList<Car> cars){
         this.state = cars;
         generateMap();
     }
-    private void generateMap(){
+    public void generateMap(){
+        this.map  = new String[6][6];
         this.state.forEach(item->{
             for (int i = 0; i< item.getLength(); i++){
                 int x = item.isVertical() ? item.getRow() -1 +i : item.getRow() -1;
