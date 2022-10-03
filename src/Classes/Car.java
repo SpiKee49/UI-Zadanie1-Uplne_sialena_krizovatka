@@ -1,6 +1,6 @@
 package Classes;
 
-public class Car {
+public class Car implements Cloneable {
     private String color;
     private int length;
     private int x;
@@ -14,6 +14,12 @@ public class Car {
         this.y = y;
         this.isVertical = isVertical;
     }
+
+    @Override
+    protected Car clone() throws CloneNotSupportedException {
+        return (Car) super.clone();
+    }
+
 
     public String getColor() {
         return color;

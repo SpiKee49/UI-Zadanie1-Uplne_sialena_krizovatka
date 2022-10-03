@@ -4,13 +4,15 @@ import Classes.State;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
 
 public class Main {
-    private static final HashMap<State, State> hash = new HashMap<>();
-    private static final ArrayList<Node> currentNodes = new ArrayList<>();
 
-    public static void main(String[] args) {
+
+    public static void main(String[] args) throws CloneNotSupportedException {
+        HashMap<State, State> hash = new HashMap<>();
+        ArrayList<Node> currentNodes = new ArrayList<>();
         int depth = 0;
         ArrayList<Car> cars = new ArrayList<>();
         cars.add(new Car("red",2, 3, 2, false));
@@ -23,6 +25,7 @@ public class Main {
         cars.add(new Car("dark-blue",3, 1, 6, true));
         State entry = new State(cars);
         Node root = new Node(entry,depth,null, null);
+        hash.putIfAbsent(root.getState(),root.getState());
         currentNodes.add(root);
         Node solution = null ;
 
@@ -44,9 +47,9 @@ public class Main {
             }
 
             for (int i = 0; i < curNumOfNodes ; i++){
-                System.out.println(currentNodes.get(i).getParent());
-                System.out.println(currentNodes.get(i) +" "+ currentNodes.get(i).getLastStep());
-                currentNodes.get(i).getState().printMap();
+                System.out.println(currentNodes.get(i).getState().getPosition());
+//                System.out.println(currentNodes.get(i) +" "+ currentNodes.get(i).getLastStep());
+//                currentNodes.get(i).getState().printMap();
                 getNextState(currentNodes.get(i), finalDepth + 1);
             }
             depth = depth +1;
@@ -58,7 +61,7 @@ public class Main {
 
 
     }
-    static void printPath(Node solution){
+    void printPath(Node solution){
         System.out.println("im here");
         if (solution.getParent() == null) return;
         System.out.println(solution.getDepth());
@@ -67,23 +70,36 @@ public class Main {
     }
 
 
-    static void getNextState(Node knot, int depth){
+     void getNextState(Node knot, int depth){
         State currentState = knot.getState();
         ArrayList<Car> cars = currentState.getPosition();
 
         cars.forEach((item)->{
             int itemIndex = cars.indexOf(item);
-//            System.out.println(currentState);
+//            System.out.println("-------------------");
+//            System.out.println(item.getColor().toUpperCase(Locale.ROOT));
 //            currentState.printMap();
             if (item.isVertical()){
-                State upState = moveCar("UP", currentState, item, itemIndex);
-                State downState = moveCar("DOWN", currentState, item, itemIndex);
+                State upState = null;
+                State downState = null;
+                try {
+                    upState = moveCar("UP", currentState, item, itemIndex);
+                    downState = moveCar("DOWN", currentState, item, itemIndex);
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
 
                 createNewNodeFromState(upState, knot, depth, item,"UP");
                 createNewNodeFromState(downState, knot, depth, item, "DOWN");
             }else {
-                State leftState = moveCar("LEFT", currentState, item, itemIndex);
-                State rightState = moveCar("RIGHT", currentState, item, itemIndex);
+                State leftState = null;
+                State rightState = null;
+                try {
+                    leftState = moveCar("LEFT", currentState, item, itemIndex);
+                    rightState = moveCar("RIGHT", currentState, item, itemIndex);
+                } catch (CloneNotSupportedException e) {
+                    e.printStackTrace();
+                }
 
                 createNewNodeFromState(leftState, knot, depth, item, "LEFT");
                 createNewNodeFromState(rightState, knot, depth, item, "RIGHT");
@@ -91,8 +107,9 @@ public class Main {
         });
     }
 
-    static void createNewNodeFromState(State state, Node parent, int depth, Car car, String direction){
+     void createNewNodeFromState(State state, Node parent, int depth, Car car, String direction){
         if (state == null) return;
+//        System.out.println("STATE ID-> " + state);
 //        state.printMap();
         if (hash.putIfAbsent(state, state) == null){
             currentNodes.add(new Node(state,depth,parent, car.getColor()+" "+ direction));
@@ -101,11 +118,11 @@ public class Main {
 //        System.out.println("Node created with car " + car.getColor() + " moved");
     }
 
-    static State moveCar(String inDirection, State currentState, Car car, int carIndex){
-
+    static State moveCar(String inDirection, State currentState, Car car, int carIndex) throws CloneNotSupportedException {
+        boolean enableDirectionPrint = false;
         String[][] currentMap = currentState.getMap();
 
-        State newState = new State(currentState.getPosition());
+
 
         switch (inDirection){
             case "LEFT":{
@@ -113,10 +130,11 @@ public class Main {
 
                 if (currentMap[car.getRow()-1][car.getColumn()-2] != null) return null;
 
+                State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow(),car.getColumn()-1, car.isVertical()));
                 newState.generateMap();
-                boolean enableDirectionPrint = false;
-                enableDirectionPrint ?System.out.println(car.getColor() + " Went LEFT") : null;
+
+                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went LEFT\n" : "");
                 return newState;
             }
             case "RIGHT":{
@@ -124,29 +142,30 @@ public class Main {
 
                 if (currentMap[car.getRow()-1][car.getColumn() + car.getLength() -1] != null) return null;
 
+                State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow(),car.getColumn()+1, car.isVertical()));
                 newState.generateMap();
-                System.out.println(car.getColor() +" Went RIGHT");
+                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went RIGHT\n" : "");
                 return newState;
             }
             case "UP":{
                 if (!car.isVertical() || car.getRow() == 1) return null;
 
                 if (currentMap[car.getRow()-2][car.getColumn()-1] != null) return null;
-
+                State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow()-1,car.getColumn(), car.isVertical()));
                 newState.generateMap();
-                System.out.println(car.getColor() + " Went UP");
+                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went UP\n" : "");
                 return newState;
             }
             case "DOWN":{
                 if (!car.isVertical() ||  car.getLength()==2 && car.getRow() == 5 || car.isVertical()&& car.getLength()==3 && car.getRow() == 4 ) return null;
 
                 if (currentMap[car.getRow() +car.getLength() -1][car.getColumn()-1] != null) return null;
-
+                State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow()+1,car.getColumn(), car.isVertical()));
                 newState.generateMap();
-                System.out.println(car.getColor() + " Went DOWN");
+                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went DOWN\n" : "");
                 return newState;
             }
             default:
