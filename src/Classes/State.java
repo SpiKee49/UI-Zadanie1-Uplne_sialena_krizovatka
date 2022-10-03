@@ -1,6 +1,7 @@
 package Classes;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Objects;
 
 public class State {
@@ -30,10 +31,10 @@ public class State {
         return map;
     }
 
-    private void printMap(){
+    public void printMap(){
         for (String[] row: this.map) {
             for (String item: row) {
-                System.out.print(item == null? "0 ": (item+ ' '));
+                System.out.print(item == null? "  ": (item.substring(0,1).toUpperCase()+ ' '));
             }
             System.out.print('\n');
         }

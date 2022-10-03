@@ -22,11 +22,11 @@ public class Main {
         cars.add(new Car("gray",2, 5, 5, false));
         cars.add(new Car("dark-blue",3, 1, 6, true));
         State entry = new State(cars);
-        Node root = new Node(entry,depth,null);
+        Node root = new Node(entry,depth,null, null);
         currentNodes.add(root);
         Node solution = null ;
 
-        while (true){
+        do{
             int finalDepth = depth;
             currentNodes.removeIf(item -> item.getDepth() != finalDepth);
             int curNumOfNodes = currentNodes.size();
@@ -44,13 +44,13 @@ public class Main {
             }
 
             for (int i = 0; i < curNumOfNodes ; i++){
-                System.out.println(currentNodes.size());
+                System.out.println(currentNodes.get(i).getParent());
+                System.out.println(currentNodes.get(i) +" "+ currentNodes.get(i).getLastStep());
+                currentNodes.get(i).getState().printMap();
                 getNextState(currentNodes.get(i), finalDepth + 1);
             }
-
-
-            depth++;
-        }
+            depth = depth +1;
+        }while (solution == null);
 
         if (solution != null){
             printPath(solution);
@@ -73,27 +73,29 @@ public class Main {
 
         cars.forEach((item)->{
             int itemIndex = cars.indexOf(item);
+//            System.out.println(currentState);
+//            currentState.printMap();
             if (item.isVertical()){
                 State upState = moveCar("UP", currentState, item, itemIndex);
                 State downState = moveCar("DOWN", currentState, item, itemIndex);
 
-                createNewNodeFromState(upState, knot, depth, item);
-                createNewNodeFromState(downState, knot, depth, item);
+                createNewNodeFromState(upState, knot, depth, item,"UP");
+                createNewNodeFromState(downState, knot, depth, item, "DOWN");
             }else {
                 State leftState = moveCar("LEFT", currentState, item, itemIndex);
                 State rightState = moveCar("RIGHT", currentState, item, itemIndex);
 
-                createNewNodeFromState(leftState, knot, depth, item);
-                createNewNodeFromState(rightState, knot, depth, item);
+                createNewNodeFromState(leftState, knot, depth, item, "LEFT");
+                createNewNodeFromState(rightState, knot, depth, item, "RIGHT");
             }
         });
     }
 
-    static void createNewNodeFromState(State state, Node parent, int depth, Car car){
+    static void createNewNodeFromState(State state, Node parent, int depth, Car car, String direction){
         if (state == null) return;
-
+//        state.printMap();
         if (hash.putIfAbsent(state, state) == null){
-            currentNodes.add(new Node(state,depth,parent));
+            currentNodes.add(new Node(state,depth,parent, car.getColor()+" "+ direction));
         }
 
 //        System.out.println("Node created with car " + car.getColor() + " moved");
@@ -113,7 +115,8 @@ public class Main {
 
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow(),car.getColumn()-1, car.isVertical()));
                 newState.generateMap();
-//                System.out.println(car.getColor() + " Went LEFT");
+                boolean enableDirectionPrint = false;
+                enableDirectionPrint ?System.out.println(car.getColor() + " Went LEFT") : null;
                 return newState;
             }
             case "RIGHT":{
@@ -123,17 +126,17 @@ public class Main {
 
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow(),car.getColumn()+1, car.isVertical()));
                 newState.generateMap();
-//                System.out.println(car.getColor() +" Went RIGHT");
+                System.out.println(car.getColor() +" Went RIGHT");
                 return newState;
             }
             case "UP":{
                 if (!car.isVertical() || car.getRow() == 1) return null;
 
-                if (currentMap[car.getRow()][car.getColumn()-1] != null) return null;
+                if (currentMap[car.getRow()-2][car.getColumn()-1] != null) return null;
 
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow()-1,car.getColumn(), car.isVertical()));
                 newState.generateMap();
-//                System.out.println(car.getColor() + " Went UP");
+                System.out.println(car.getColor() + " Went UP");
                 return newState;
             }
             case "DOWN":{
@@ -143,7 +146,7 @@ public class Main {
 
                 newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow()+1,car.getColumn(), car.isVertical()));
                 newState.generateMap();
-//                System.out.println(car.getColor() + " Went UP");
+                System.out.println(car.getColor() + " Went DOWN");
                 return newState;
             }
             default:
