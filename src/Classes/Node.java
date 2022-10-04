@@ -1,6 +1,5 @@
 package Classes;
 
-import java.util.ArrayList;
 
 public class Node {
     private State state;
