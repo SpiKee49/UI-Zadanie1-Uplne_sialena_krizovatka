@@ -1,174 +1,186 @@
 package Classes;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 public class App {
-    private HashMap<State, State> hash = new HashMap<>();
-    private ArrayList<Node> currentNodes = new ArrayList<>();
 
-    public App(){
+    //hashmap to hold duplicit states
+    private HashMap<String, Integer> hash = new HashMap<>();
+
+    //stack to hold latest steps from root to current node
+
+    private Node solution = null;
+
+    //constructor
+    public App() {
 
     }
 
-    public void run() {
+
+    public void run(){
 
         int depth = 0;
+        //car input array
         ArrayList<Car> cars = new ArrayList<>();
-        cars.add(new Car("red",2, 3, 2, false));
-        cars.add(new Car("orange",2, 1, 1, false));
-        cars.add(new Car("yellow",3, 2, 1, true));
-        cars.add(new Car("purple",2, 5, 1, true));
-        cars.add(new Car("green",3, 2, 4, true));
-        cars.add(new Car("blue",3, 6, 3, false));
-        cars.add(new Car("gray",2, 5, 5, false));
-        cars.add(new Car("dark-blue",3, 1, 6, true));
+        cars.add(new Car("red", 2, 3, 2, false));
+        cars.add(new Car("orange", 2, 1, 1, false));
+        cars.add(new Car("yellow", 3, 2, 1, true));
+        cars.add(new Car("purple", 2, 5, 1, true));
+        cars.add(new Car("green", 3, 2, 4, true));
+        cars.add(new Car("blue", 3, 6, 3, false));
+        cars.add(new Car("gray", 2, 5, 5, false));
+        cars.add(new Car("dark-blue", 3, 1, 6, true));
+        //create new state from cars positions
         State entry = new State(cars);
-        Node root = new Node(entry,depth,null, null);
-        hash.putIfAbsent(root.getState(),root.getState());
-        currentNodes.add(root);
-        Node solution = null ;
+        Stack<String> possibleMoves = new Stack<>();
 
-        do{
-            int finalDepth = depth;
-            currentNodes.forEach(System.out::println);
-            currentNodes.removeIf(item -> item.getDepth() != finalDepth);
-            int curNumOfNodes = currentNodes.size();
-            if (currentNodes.isEmpty()){
-                System.out.println("Problem does not have a solution. Reached depth: " + finalDepth);
-                break;
+        //create available moves Stack with format -> "color/DIRECTION"
+        cars.forEach(item -> {
+            if (item.isVertical()) {
+                possibleMoves.push(item.getColor() + "/UP");
+                possibleMoves.push(item.getColor() + "/DOWN");
+                return;
             }
-            for (Node item: currentNodes) {
-                Car findCar = item.getState().findCarByColor(item.getState().getMap()[2][5]);
-                if (findCar == null) return;;
-                if (!findCar.isVertical()){
-                    solution = item;
-                    break;
-                }
-            }
+            possibleMoves.push(item.getColor() + "/LEFT");
+            possibleMoves.push(item.getColor() + "/RIGHT");
 
-            for (int i = 0; i < curNumOfNodes ; i++){
-//                System.out.println("WE CONTINUE IN BRANCH -"+currentNodes.get(i).getState() +" "+ currentNodes.get(i).getLastStep());
-//                currentNodes.get(i).getState().printMap();
-                getNextState(currentNodes.get(i), finalDepth + 1);
-            }
-            depth = depth +1;
-        }while (solution == null);
+        });
 
-        if (solution != null){
-            printPath(solution);
-        }
+        //create root node
+        Node root = new Node(null, entry, depth, possibleMoves);
+        hash.put(root.getState().toString(), 1);
+
+        do {
+            depth++;
+            getNextState(root, depth, possibleMoves);
+
+            hash.clear();
+        } while (solution == null);
+
 
 
     }
-    void printPath(Node solution){
+
+    void printPath(Node solution) {
         System.out.println("im here");
-        if (solution.getParent() == null) return;
+        if (solution == null) return;
         System.out.println(solution.getDepth());
-        printPath(solution.getParent());
+        printPath(solution.parent);
 
     }
 
 
-    void getNextState(Node knot, int depth){
+    void getNextState(Node knot, int depth, Stack<String> possibleMoves) {
+        System.out.println();
         State currentState = knot.getState();
         ArrayList<Car> cars = currentState.getPosition();
 
-        cars.forEach((item)->{
-            int itemIndex = cars.indexOf(item);
-//           System.out.println("-------------------");
-//            System.out.println(item.getColor().toUpperCase());
-//            currentState.printMap();
-            if (item.isVertical()){
-                State upState = null;
-                State downState = null;
-                try {
-                    upState = moveCar("UP", currentState, item, itemIndex);
-                    downState = moveCar("DOWN", currentState, item, itemIndex);
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                }
+        //we are in root and we traversed through entire tree and found no match
+        if (knot.parent == null && knot.availableMoves.isEmpty()) return;
 
-                createNewNodeFromState(upState, knot, depth, item,"UP");
-                createNewNodeFromState(downState, knot, depth, item, "DOWN");
-            }else {
-                State leftState = null;
-                State rightState = null;
-                try {
-                    leftState = moveCar("LEFT", currentState, item, itemIndex);
-                    rightState = moveCar("RIGHT", currentState, item, itemIndex);
-                } catch (CloneNotSupportedException e) {
-                    e.printStackTrace();
-                }
-
-                createNewNodeFromState(leftState, knot, depth, item, "LEFT");
-                createNewNodeFromState(rightState, knot, depth, item, "RIGHT");
-            }
-        });
-    }
-
-    void createNewNodeFromState(State state, Node parent, int depth, Car car, String direction){
-        if (state == null) return;
-//        System.out.println("STATE ID-> " + state);
-//        state.printMap();
-        if (hash.putIfAbsent(state, state) == null){
-            Node toAdd = new Node(state,depth,parent, car.getColor()+" "+direction);
-            currentNodes.add(toAdd);
-//           System.out.println("Was put "+ currentNodes.get(currentNodes.size() -1));
-
+        //check if we went through and found no match then we return to the parent Node
+        if (knot.availableMoves.isEmpty()) {
+            Node newNode = knot.parent;
+            knot.parent = null;
+            getNextState(newNode, depth, possibleMoves);
         }
 
-//        System.out.println("Node created with car " + car.getColor() + " moved");
+
+        // nextMove format after split -> ["color","DIRECTION"]
+        String[] nextMove = knot.availableMoves.pop().split("/");
+
+        //if the knot is in wanted depth
+        if (depth == knot.getDepth()) {
+            //look for car at exit and check if it is horizontal, then we found solution
+            Car match = knot.getState().findCarByColor(knot.getState().getMap()[2][5]);
+            if (match != null && !match.isVertical()) {
+                solution = knot;
+                printPath(knot);
+                return;
+            }
+            //if the match is NULL or is vertical then we have to look for other sibling
+            Node newNode = knot.parent;
+            knot.parent = null;
+
+            getNextState(newNode, depth, possibleMoves);
+        }
+
+        //find car from current move obtained from Stack availableMoves
+        Car car = cars.stream().filter(item -> Objects.equals(item.getColor(), nextMove[0])).findFirst().orElse(null);
+
+        if (car == null) return;
+
+
+        int carIndex = cars.indexOf(car);
+
+        //make new state with changed position on chosen car
+        State newState = moveCar(nextMove[1], currentState, car, carIndex);
+        //TODO if we cant make a move newSate comes back as null -> then we have to run func again on same node but pick differend car
+        //check if state was already found
+        if (newState != null && hash.putIfAbsent(newState.toString(), 1) == null) {
+            Node newKnot = new Node(knot, newState, knot.getDepth()+ 1, possibleMoves);
+            getNextState(newKnot, depth, possibleMoves);
+        }else {                         //if it was we gotta look for another sibling
+            Node newNode = knot.parent;
+            knot.parent = null;
+            getNextState(newNode, depth, possibleMoves);
+        }
+
     }
 
-    State moveCar(String inDirection, State currentState, Car car, int carIndex) throws CloneNotSupportedException {
-        boolean enableDirectionPrint = false;
+
+    State moveCar(String inDirection, State currentState, Car car, int carIndex) {
+        //get map with cars to tell which squares are occupated
         String[][] currentMap = currentState.getMap();
 
 
+        switch (inDirection) {
+            case "LEFT": {
+                if (car.isVertical() || car.getColumn() == 1) return null;  //check if the car isnt at the edge position
 
-        switch (inDirection){
-            case "LEFT":{
-                if (car.isVertical() || car.getColumn() == 1) return null;
+                //if it isnt at the edge, we have to check if there isnt another car blocking desired square
+                if (currentMap[car.getRow() - 1][car.getColumn() - 2] != null) return null;
 
-                if (currentMap[car.getRow()-1][car.getColumn()-2] != null) return null;
+                State newState = new State(currentState.getPosition()); //copy current state
 
-                State newState = new State(currentState.getPosition());
-                newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow(),car.getColumn()-1, car.isVertical()));
+                //replace current car with new one moved by one square in desired direction: in this case LEFT
+                newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow(), car.getColumn() - 1, car.isVertical()));
                 newState.generateMap();
 
-                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went LEFT\n" : "");
+                //System.out.print(enableDirectionPrint ? car.getColor() + "\n Went LEFT\n" : "");
                 return newState;
             }
-            case "RIGHT":{
-                if (car.isVertical() || car.getLength()==2 && car.getColumn() == 5 || car.getLength()==3 && car.getColumn() == 4 ) return null;
+            case "RIGHT": {
+                if (car.isVertical() || car.getLength() == 2 && car.getColumn() == 5 || car.getLength() == 3 && car.getColumn() == 4)
+                    return null;
 
-                if (currentMap[car.getRow()-1][car.getColumn() + car.getLength() -1] != null) return null;
+                if (currentMap[car.getRow() - 1][car.getColumn() + car.getLength() - 1] != null) return null;
 
                 State newState = new State(currentState.getPosition());
-                newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow(),car.getColumn()+1, car.isVertical()));
+                newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow(), car.getColumn() + 1, car.isVertical()));
                 newState.generateMap();
-                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went RIGHT\n" : "");
+                //System.out.print(enableDirectionPrint ? car.getColor() + "\n Went RIGHT\n" : "");
                 return newState;
             }
-            case "UP":{
-                if (!car.isVertical() || car.getRow() == 1) return null;
+            case "UP": {
+                if (car.isVertical() && car.getRow() == 1) return null;
 
-                if (currentMap[car.getRow()-2][car.getColumn()-1] != null) return null;
+                if (currentMap[car.getRow() - 2][car.getColumn() - 1] != null) return null;
                 State newState = new State(currentState.getPosition());
-                newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow()-1,car.getColumn(), car.isVertical()));
+                newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow() - 1, car.getColumn(), car.isVertical()));
                 newState.generateMap();
-                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went UP\n" : "");
+                //System.out.print(enableDirectionPrint ? car.getColor() + "\n Went UP\n" : "");
                 return newState;
             }
-            case "DOWN":{
-                if (!car.isVertical() ||  car.getLength()==2 && car.getRow() == 5 || car.isVertical()&& car.getLength()==3 && car.getRow() == 4 ) return null;
+            case "DOWN": {
+                if (!car.isVertical() || car.getLength() == 2 && car.getRow() == 5 || car.isVertical() && car.getLength() == 3 && car.getRow() == 4)
+                    return null;
 
-                if (currentMap[car.getRow() +car.getLength() -1][car.getColumn()-1] != null) return null;
+                if (currentMap[car.getRow() + car.getLength() - 1][car.getColumn() - 1] != null) return null;
                 State newState = new State(currentState.getPosition());
-                newState.getPosition().set(carIndex, new Car(car.getColor(),car.getLength(),car.getRow()+1,car.getColumn(), car.isVertical()));
+                newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow() + 1, car.getColumn(), car.isVertical()));
                 newState.generateMap();
-                System.out.print(enableDirectionPrint ? car.getColor() + "\n Went DOWN\n" : "");
+                //System.out.print(enableDirectionPrint ? car.getColor() + "\n Went DOWN\n" : "");
                 return newState;
             }
             default:

@@ -18,7 +18,6 @@ public class State implements Cloneable {
             for (int i = 0; i< item.getLength(); i++){
                 int x = item.isVertical() ? item.getRow() -1 +i : item.getRow() -1;
                 int y = item.isVertical() ? item.getColumn() -1: item.getColumn() -1 + i;
-//                System.out.println(item.getColor() + " " + x + " " +y);
                 this.map[x][y] = item.getColor();
             }
         });
