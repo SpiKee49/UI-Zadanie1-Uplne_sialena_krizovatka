@@ -23,5 +23,8 @@ public class Node {
     public int getDepth() {
         return depth;
     }
-
+    @SuppressWarnings (value="unchecked")
+    public void setAvailableMoves(Stack<String> availableMoves) {
+        this.availableMoves = (Stack<String>) availableMoves.clone();
+    }
 }
