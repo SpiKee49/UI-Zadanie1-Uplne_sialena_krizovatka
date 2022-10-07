@@ -5,7 +5,6 @@ import java.util.*;
 public class App {
 
     //hashmap to hold duplicit states
-    private HashMap<String, Integer> hash = new HashMap<>();
 
     //stack to hold latest steps from root to current node
 
@@ -41,30 +40,31 @@ public class App {
 
         //create new state from cars positions
         State entry = new State(cars);
-        Stack<String> possibleMoves = new Stack<>();
+        ArrayList<String> possibleMoves = new ArrayList<>();
         //create available moves Stack with format -> "color/DIRECTION"
         cars.forEach(item -> {
             if (item.isVertical()) {
-                possibleMoves.push(item.getColor() + "/UP");
-                possibleMoves.push(item.getColor() + "/DOWN");
+                possibleMoves.add(item.getColor() + "/UP");
+                possibleMoves.add(item.getColor() + "/DOWN");
                 return;
             }
-            possibleMoves.push(item.getColor() + "/LEFT");
-            possibleMoves.push(item.getColor() + "/RIGHT");
+            possibleMoves.add(item.getColor() + "/LEFT");
+            possibleMoves.add(item.getColor() + "/RIGHT");
 
         });
 
         //create root node
-        Node root = new Node(null, entry, depth, possibleMoves);
-        hash.put(root.getState().toString(), 1);
-
-
+        Node root = new Node(null, entry, depth);
 
         boolean again = true;
+
+        while(again){
+            again = false;
         getNextState(root, 1, possibleMoves);
-
-
-
+        if (solution == null){
+            again = true;
+        }
+        }
 
     }
 
@@ -79,31 +79,13 @@ public class App {
     }
 
 
-    void getNextState(Node knot, int depth, Stack<String> possibleMoves) {
-
-        State currentState = knot.getState();
-        ArrayList<Car> cars = currentState.getPosition();
-
-        //we are in root and we traversed through entire tree and found no match we reset the tree and continue to search for the solution
-        if (knot.parent == null && knot.availableMoves.isEmpty()){
-            knot.setAvailableMoves(possibleMoves);
-            depth+=1;
-        }
-        System.out.println(depth);
-        //check if we went through and found no match then we return to the parent Node
-        if (knot.availableMoves.isEmpty()) {
-            Node newNode = knot.parent;
-            knot.parent = null;
-            getNextState(newNode, depth, possibleMoves);
-            return;
-        }
-
-
-        // nextMove format after split -> ["color","DIRECTION"]
-        String[] nextMove = knot.availableMoves.pop().split("/");
+    void getNextState(Node knot, int finalDepth, ArrayList<String> possibleMoves) {
+//      1. skontroluj hlbku v akej sme, ak je < ako pozadovana chod na 3. || return
 
         //if the knot is in wanted depth
-        if (depth == knot.getDepth()) {
+        if (finalDepth == knot.getDepth()) {
+
+//        2. check ci sme nanasli solution ak ano return
             //look for car at exit and check if it is horizontal, then we found solution
             Car match = knot.getState().findCarByColor(knot.getState().getMap()[2][5]);
             if (match != null && !match.isVertical()) {
@@ -111,39 +93,38 @@ public class App {
                 printPath(knot);
                 return;
             }
-            //if the match is NULL or is vertical then we have to look for other sibling
-            Node newNode = knot.parent;
-            knot.parent = null;
-            getNextState(newNode, depth, possibleMoves);
-            return;
         }
 
-        //find car from current move obtained from Stack availableMoves
-        Car car = cars.stream().filter(item -> Objects.equals(item.getColor(), nextMove[0])).findFirst().orElse(null);
+        State currentState = knot.getState();
+        ArrayList<Car> cars = currentState.getPosition();
 
-        if (car == null) return;
+//        3. possibleMoves.forEach(move->getNextState)
+        possibleMoves.forEach(move->{
+
+            // nextMove format after split -> ["color","DIRECTION"]
+            String[] nextMove = move.split("/");
+
+            //find car from current move obtained from Stack availableMoves
+            Car car = cars.stream().filter(item -> Objects.equals(item.getColor(), nextMove[0])).findFirst().orElse(null);
+
+            if (car == null) return;
+            int carIndex = cars.indexOf(car);
+
+            //make new state with changed position on chosen car
+            State newState = moveCar(nextMove[1], currentState, car, carIndex);
+
+            if (newState == null) return;
+
+            // state wasnt null so the move was valid, therefore we can create new node
+            Node newKnot = new Node(knot, newState, knot.getDepth()+ 1);
+            getNextState(newKnot,finalDepth,possibleMoves);
 
 
-        int carIndex = cars.indexOf(car);
+        });
 
-        //make new state with changed position on chosen car
-        State newState = moveCar(nextMove[1], currentState, car, carIndex);
-        //TODO if we cant make a move newSate comes back as null -> then we have to run func again on same node but pick differend car
-        if (newState == null){
-            getNextState(knot, depth, possibleMoves);
-            return;
-        }
-        //check if state was already found
-        if (hash.putIfAbsent(newState.toString(), 1) == null) {
-            Node newKnot = new Node(knot, newState, knot.getDepth()+ 1, possibleMoves);
-            getNextState(newKnot, depth, possibleMoves);
 
-        }else {                         //if it was we gotta look for another sibling
-            Node newNode = knot.parent;
-            knot.parent = null;
-            getNextState(newNode, depth, possibleMoves);
 
-        }
+
 
     }
 
