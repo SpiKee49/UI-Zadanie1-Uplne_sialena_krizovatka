@@ -9,7 +9,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 public class Main {
-    public static void main(String[] args) throws CloneNotSupportedException {
+    public static void main(String[] args) {
         App mainApp = new App();
         mainApp.run();
     }
