@@ -19,7 +19,7 @@ public class App {
         String[] problem1 = new String[]{"red 2 3 4 false", "orange 2 1 2 false","yellow 3 1 1 true","purple 2 4 1 true","green 3 4 4 true","blue 3 6 1 false","gray 2 5 2 false","dark-blue 3 4 6 true"};
        //TODO 2 doesnt work
         String[] problem2 = new String[]{"red 2 3 1 false", "orange 2 5 6 true","yellow 3 1 3 true","purple 3 4 1 true","green 3 4 2 false","blue 2 5 2 false","gray 2 1 1 false","dark-blue 2 3 6 true"};
-        String[] problem3 = new String[]{"red 2 3 2 false", "orange 2 5 6 true","yellow 3 1 4 true","purple 3 2 1 true","green 3 4 2 false","blue 2 5 2 false","gray 2 1 1 false","dark-blue 2 3 6 true"};
+        String[] problem3 = new String[]{"red 2 3 2 false", "orange 2 5 6 true","yellow 3 1 4 true","purple 3 1 1 true","green 3 4 2 false","blue 2 5 2 false","gray 2 2 1 false","dark-blue 2 3 6 true"};
         String[] problem4 = new String[]{"red 2 3 2 false", "orange 2 3 5 true","yellow 3 3 4 true","purple 3 2 1 true","green 3 6 1 false","blue 2 5 1 false","gray 2 1 1 false","dark-blue 2 3 6 true"};
 
 
@@ -27,7 +27,7 @@ public class App {
 
 
         //car input array
-        ArrayList<Car> cars = problemToArrayList(problem3);
+        ArrayList<Car> cars = problemToArrayList(problem1);
 
 
 
@@ -46,17 +46,17 @@ public class App {
         entry.generateMap();
 
 
-        ArrayList<String> possibleMoves = new ArrayList<>();
+        ArrayList<String[]> possibleMoves = new ArrayList<>();
 
         //create available moves Arraylist with format -> "color/DIRECTION"
         cars.forEach(item -> {
             if (item.isVertical()) {
-                possibleMoves.add(cars.indexOf(item) + "/UP");
-                possibleMoves.add(cars.indexOf(item) + "/DOWN");
+                possibleMoves.add(new String[]{String.valueOf(cars.indexOf(item)), "UP"});
+                possibleMoves.add(new String[]{String.valueOf(cars.indexOf(item)), "DOWN"});
                 return;
             }
-            possibleMoves.add(cars.indexOf(item) + "/LEFT");
-            possibleMoves.add(cars.indexOf(item) + "/RIGHT");
+            possibleMoves.add(new String[]{String.valueOf(cars.indexOf(item)), "LEFT"});
+            possibleMoves.add(new String[]{String.valueOf(cars.indexOf(item)), "RIGHT"});
 
         });
 
@@ -76,7 +76,7 @@ public class App {
         }
         printPath(solution);
         long end = System.currentTimeMillis();
-        System.out.println("Took time: " + (end-start/1000.0) +"s");
+        System.out.println("Took time: " + ((end-start)/1000.0) +"s");
 
     }
 
@@ -91,7 +91,7 @@ public class App {
     }
 
 
-    void getNextState(Node knot, int finalDepth, ArrayList<String> possibleMoves) {
+    void getNextState(Node knot, int finalDepth, ArrayList<String[]> possibleMoves) {
 //      1. skontroluj hlbku v akej sme, ak je < ako pozadovana chod na 3. || return
         //if the knot is in wanted depth
         if (knot.getDepth() == 13) {
@@ -121,17 +121,14 @@ public class App {
 //        3. possibleMoves.forEach(move->getNextState)
         possibleMoves.forEach(move -> {
 
-            // nextMove format after split -> ["color","DIRECTION"]
-            String[] nextMove = move.split("/");
 
             //find car from current move obtained from Stack availableMoves
-            Car car = cars.get(Integer.parseInt(nextMove[0]));
+            Car car = cars.get(Integer.parseInt(move[0]));
 
             if (car == null) return;
-            int carIndex = cars.indexOf(car);
 
             //make new state with changed position on chosen car
-            State newState = moveCar(nextMove[1], currentState, car, carIndex);
+            State newState = moveCar(move[1], currentState, car, Integer.parseInt(move[0]));
             if (newState == null) {
                 return;
             }
@@ -165,9 +162,6 @@ public class App {
                 //replace current car with new one moved by one square in desired direction: in this case LEFT
                 newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow(), car.getColumn() - 1, car.isVertical()));
 
-                //update map
-                newState.generateMap();
-
                 return newState;
             }
             case "RIGHT": {
@@ -178,7 +172,7 @@ public class App {
 
                 State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow(), car.getColumn() + 1, car.isVertical()));
-                newState.generateMap();
+
 
                 return newState;
             }
@@ -188,8 +182,6 @@ public class App {
                 if (currentMap[car.getRow() - 2][car.getColumn() - 1] != null) return null;
                 State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow() - 1, car.getColumn(), car.isVertical()));
-                newState.generateMap();
-
                 return newState;
             }
             case "DOWN": {
@@ -199,7 +191,6 @@ public class App {
                 if (currentMap[car.getRow() + car.getLength() - 1][car.getColumn() - 1] != null) return null;
                 State newState = new State(currentState.getPosition());
                 newState.getPosition().set(carIndex, new Car(car.getColor(), car.getLength(), car.getRow() + 1, car.getColumn(), car.isVertical()));
-                newState.generateMap();
 
                 return newState;
             }
