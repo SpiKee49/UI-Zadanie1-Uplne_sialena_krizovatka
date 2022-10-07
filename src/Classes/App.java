@@ -59,12 +59,15 @@ public class App {
         boolean again = true;
 
         while(again){
+            depth++;
             again = false;
-        getNextState(root, 1, possibleMoves);
+        getNextState(root, depth, possibleMoves);
         if (solution == null){
+
             again = true;
         }
         }
+        printPath(solution);
 
     }
 
@@ -74,14 +77,13 @@ public class App {
         }
         solution.getState().printMap();
         System.out.println("-------------");
-        printPath(solution.parent);
 
     }
 
 
     void getNextState(Node knot, int finalDepth, ArrayList<String> possibleMoves) {
 //      1. skontroluj hlbku v akej sme, ak je < ako pozadovana chod na 3. || return
-
+        System.out.println(knot.getDepth());
         //if the knot is in wanted depth
         if (finalDepth == knot.getDepth()) {
 
@@ -90,9 +92,9 @@ public class App {
             Car match = knot.getState().findCarByColor(knot.getState().getMap()[2][5]);
             if (match != null && !match.isVertical()) {
                 solution = knot;
-                printPath(knot);
-                return;
+                knot.parent = null;
             }
+            return;
         }
 
         State currentState = knot.getState();
@@ -113,7 +115,9 @@ public class App {
             //make new state with changed position on chosen car
             State newState = moveCar(nextMove[1], currentState, car, carIndex);
 
-            if (newState == null) return;
+            if (newState == null) {
+                return;
+            }
 
             // state wasnt null so the move was valid, therefore we can create new node
             Node newKnot = new Node(knot, newState, knot.getDepth()+ 1);
