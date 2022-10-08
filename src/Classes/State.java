@@ -1,3 +1,7 @@
+// -------------------------------------
+// This code is property of René Bukovina and cannot be distributed or used outside of this project without authors approval.
+// -------------------------------------
+
 package Classes;
 
 import java.util.ArrayList;
@@ -7,10 +11,14 @@ import java.util.Objects;
 public class State implements Cloneable {
     private ArrayList<Car> state;
     private Integer[][] map;
+    public String lastMove;
+
+    // constructor
     public State(ArrayList<Car> cars) {
         this.state = new ArrayList<>(cars.size());
         this.state.addAll(cars);
     }
+    //function to generate 2D array
     public void generateMap(){
         this.map  = new Integer[6][6];
         this.state.forEach(item->{

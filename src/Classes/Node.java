@@ -1,6 +1,8 @@
+// -------------------------------------
+// This code is property of René Bukovina and cannot be distributed or used outside of this project without authors approval.
+// -------------------------------------
+
 package Classes;
-
-
 
 public class Node {
     private State state;
@@ -21,3 +23,4 @@ public class Node {
     }
 
 }
+
